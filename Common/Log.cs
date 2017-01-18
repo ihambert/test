@@ -16,10 +16,17 @@ namespace Common
         /// <param name="e">异常</param>
         public static void Error(string msg, Exception e)
         {
-            var innerEx = e.InnerException == null
+            if (e == null)
+            {
+                Warn(msg);
+            }
+            else
+            {
+                var innerEx = e.InnerException == null
                 ? string.Empty
                 : $",InMessage:{e.InnerException.Message},InSource:{e.InnerException.Source},InStackTrace:{e.InnerException.StackTrace}";
-            Logger(FileError, $"{msg}，Message:{e.Message},Source:{e.Source},StackTrace:{e.StackTrace}{innerEx}");
+                Logger(FileError, $"{msg}，Message:{e.Message},Source:{e.Source},StackTrace:{e.StackTrace}{innerEx}");
+            }
         }
 
         /// <summary>
@@ -61,6 +68,7 @@ namespace Common
 
                 try
                 {
+                    //加锁排队是必须的，否则快速插入日志的情况下会出现异常
                     lock (fileName)
                     {
                         File.AppendAllText(fileName, msg);
@@ -77,6 +85,7 @@ namespace Common
         #region 常量
 
         private const string FileBase = "File/Log";
+        //以一个月对一个单位，每个月生成一个文件
         private static readonly string FileError = "File/Log/Error" + DateTime.Now.ToString("yyMM") + ".txt";
         private static readonly string FileWarn = "File/Log/Warn" + DateTime.Now.ToString("yyMM") + ".txt";
         private static readonly string FileInfo = "File/Log/Info" + DateTime.Now.ToString("yyMM") + ".txt";

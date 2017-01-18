@@ -1,4 +1,5 @@
-﻿using System.Drawing;
+﻿using System.Diagnostics;
+using System.Drawing;
 using System.Linq;
 using System.Threading;
 using System.Windows.Forms;
@@ -9,11 +10,8 @@ namespace GradingFund
     public partial class Form1 : Form
     {
         public delegate void MyDelegate(GradingFundData data);
-
         private readonly Tip _tip = new Tip();
-
         public MyDelegate Updated;
-
         public Form1()
         {
             InitializeComponent();
@@ -24,17 +22,12 @@ namespace GradingFund
             util.Updated += Util_Updated;
             util.Start();
         }
-
         private void Util_Updated(GradingFundData data)
         {
             //测试：记录当前线程ID
             Log.Debug($"Util_Updated线程ID：{Thread.CurrentThread.ManagedThreadId}");
             BeginInvoke(Updated, data);
-            //Log.Debug("BeginInvoke");
-            //Invoke(Updated, data);
-            //Log.Debug("Invoke");
         }
-
         private void Refresh(GradingFundData data)
         {
             //测试：记录当前线程ID
@@ -122,9 +115,9 @@ namespace GradingFund
 
         private void dgvFunds_CellContentClick(object sender, DataGridViewCellEventArgs e)
         {
-            if (e.ColumnIndex == 0)
+            if (e.ColumnIndex == 0 && e.RowIndex != -1)
             {
-                
+                Process.Start($"http://fund.eastmoney.com/{dgvFunds.Rows[e.RowIndex].Cells[0].Value}.html");
             }
         }
     }

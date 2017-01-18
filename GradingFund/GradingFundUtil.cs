@@ -455,6 +455,10 @@ namespace GradingFund
             {
                 UpdateData();
             }
+            else
+            {
+                ContinueUpdate();
+            }
         }
 
         #region 常量变量

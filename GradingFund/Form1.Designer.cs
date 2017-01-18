@@ -35,7 +35,7 @@
             this.lblHot2 = new System.Windows.Forms.Label();
             this.dgvFunds = new System.Windows.Forms.DataGridView();
             this.Column1 = new System.Windows.Forms.DataGridViewLinkColumn();
-            this.Column2 = new System.Windows.Forms.DataGridViewLinkColumn();
+            this.Column2 = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.Column4 = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.Rate = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.AvgRate = new System.Windows.Forms.DataGridViewTextBoxColumn();
@@ -140,6 +140,7 @@
             this.Column1.HeaderText = "分级代码";
             this.Column1.Name = "Column1";
             this.Column1.ReadOnly = true;
+            this.Column1.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.Automatic;
             // 
             // Column2
             // 
@@ -147,6 +148,7 @@
             this.Column2.HeaderText = "分级名称";
             this.Column2.Name = "Column2";
             this.Column2.ReadOnly = true;
+            this.Column2.Resizable = System.Windows.Forms.DataGridViewTriState.True;
             // 
             // Column4
             // 
@@ -281,7 +283,7 @@
         private System.Windows.Forms.Label lblHot2;
         private System.Windows.Forms.DataGridView dgvFunds;
         private System.Windows.Forms.DataGridViewLinkColumn Column1;
-        private System.Windows.Forms.DataGridViewLinkColumn Column2;
+        private System.Windows.Forms.DataGridViewTextBoxColumn Column2;
         private System.Windows.Forms.DataGridViewTextBoxColumn Column4;
         private System.Windows.Forms.DataGridViewTextBoxColumn Rate;
         private System.Windows.Forms.DataGridViewTextBoxColumn AvgRate;

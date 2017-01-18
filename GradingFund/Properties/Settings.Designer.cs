@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace 分级小助手.Properties
+namespace GradingFund.Properties
 {
 
 

@@ -63,7 +63,7 @@
         /// <summary>
         ///     成交额（亿）
         /// </summary>
-        public float Tm;
+        public double Tm;
 
         /// <summary>
         ///     换手率

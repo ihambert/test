@@ -150,7 +150,8 @@ namespace GradingFund
 
             #endregion
 
-            var thread = new Thread(UpdateData);
+            //必须是后台线程，否则程序退出时此线程依然没退出，导致在内存中依然有此进程
+            var thread = new Thread(UpdateData) {IsBackground = true};
             thread.Start();
             //测试：记录当前线程ID
             Log.Debug("开始循环获取数据");
@@ -245,7 +246,7 @@ namespace GradingFund
                     stock.MaxPrice = Convert.ToSingle(a[3]);
                     stock.MinPrice = Convert.ToSingle(a[4]);
                     stock.Price = Convert.ToSingle(a[5]);
-                    stock.Tm = float.Parse((Convert.ToSingle(a[6])/10000).ToString("F1"));
+                    stock.Tm = Math.Round(Convert.ToDouble(a[6]) / 10000, 1);
                     stock.Cat = Convert.ToSingle(a[7]);
                     stock.Tr = Convert.ToSingle(a[8]);
                     stock.Ape = Convert.ToSingle(a[9]);
@@ -256,19 +257,6 @@ namespace GradingFund
                 }
             }
             _tasks.Clear();
-            if (_data.IsOpen)
-            {
-                //删除停牌个股
-                var rc = _data.Stocks.RemoveAll(o => o.MaxPrice == 0);
-
-                if (rc > 0)
-                {
-                    foreach (var fund in _data.GradingFunds)
-                    {
-                        fund.Stocks.RemoveAll(o => o.MaxPrice == 0);
-                    }
-                }
-            }
 
             #endregion
 
@@ -317,14 +305,29 @@ namespace GradingFund
                 //统计数据
                 fund.Rate = Math.Round((fund.Price - fund.YesterdayPrice)*100/fund.YesterdayPrice, 2);
                 fund.Swing = Math.Round((fund.MaxPrice - fund.MinPrice)*100/fund.YesterdayPrice, 2);
-                if (fund.Stocks.Count == 0) continue;
                 double rateAll = 0;
                 int redCount = 0;
                 int stockCount = 0;
                 float ratioAll = 0;
-                for (int l = 0; l < fund.Stocks.Count; l++)
+                for (int l = fund.Stocks.Count - 1; l >= 0; l--)
                 {
                     var stock = fund.Stocks[l];
+
+                    if (stock.MaxPrice == 0 && _data.IsOpen)
+                    {
+                        var fs = _data.Stocks.FindIndex(o => o.Code == stock.Code);
+
+                        if (fs >= 0)
+                        {
+                            Log.Debug($"{stock.Code}{stock.Name}停牌");
+                            _data.Stocks.RemoveAt(fs);
+                        }
+
+                        //删除停牌个股
+                        fund.Stocks.RemoveAt(l);
+                        continue;
+                    }
+
                     if (stock.Rate > -10.1)
                     {
                         rateAll += stock.Rate*fund.HoldingRatio[l];
@@ -341,6 +344,7 @@ namespace GradingFund
                     {
                         fund.Leader = stock;
                     }
+
                     if (stock.Speed > fund.MaxSpeed.Speed)
                     {
                         fund.MaxSpeed = stock;
@@ -450,6 +454,7 @@ namespace GradingFund
         {
             //将被线程挂起，等待一段时间后继续占用CPU
             Thread.Sleep(SleepTime);
+            _data.IsInit = true;
 
             if (_data.IsDealTime)
             {

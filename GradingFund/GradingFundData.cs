@@ -52,6 +52,11 @@ namespace GradingFund
         /// </summary>
         public bool IsOpen => DateTime.Now > _kpTime;
 
+        /// <summary>
+        /// 判断数据是否已经初始化
+        /// </summary>
+        public bool IsInit;
+
         public GradingFundData()
         {
             Stocks = new List<Stock>();

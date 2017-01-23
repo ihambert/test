@@ -33,47 +33,52 @@ namespace GradingFund
             //测试：记录当前线程ID
             Log.Debug($"Refresh线程ID：{Thread.CurrentThread.ManagedThreadId}");
             var gfs = data.GradingFunds.OrderByDescending(o => o.AvgRate).ToList();
-            string tip;
-            if (data.Inf > 0.5)
-            {
-                //大盘上涨时按平均涨幅倒序找出3个被低估的分级（此种是理想的买入区间，但最好在开头部分买入，否则可能追高）
-                tip = string.Join(" ", gfs.Where(o => o.AvgRate > o.Rate).Take(3).Select(o => o.Rate + "^" + o.Speed + "^" + o.MinPrice + o.Name + o.Code));
-                tip = $"{data.Inflow}吸{data.Inf} {tip}";
-                if (data.IsOpen)
-                {
-                    _tip.ShowTip(tip, Color.Red);
-                }
-            }
-            else if (data.Inf < -0.5)
-            {
-                //大盘下跌时提示逆势的3个分级，很可能是突围的分级（此种情况谨慎抄底，最好抓住下跌末尾抄进去，否则很危险，谨慎者不在此区间买入）
-                tip = string.Join(" ",
-                    data.GradingFunds.Where(o => o.Speed > 0.1).OrderByDescending(o => o.Speed).Take(3).Select(o => o.Rate + "^" + o.Speed + "^" + o.MinPrice + o.Name + o.Code));
-                tip = $"{data.Inflow}抛{data.Inf} {tip}";
-                if (data.IsOpen)
-                {
-                    _tip.ShowTip(tip, Color.Green);
-                }
-            }
-            else if (data.Stocks.Max(o => o.Speed > 1))
-            {
-                //大盘无大波动的情况下找出异动的个股对应的分级，可能是突围的分级（此种情况食之无味，弃之可惜）
-                tip = string.Join(" ", data.GradingFunds.OrderByDescending(o => o.MaxSpeed.Speed).Take(3).Select(o => o.Rate + "^" + o.Speed + "^" + o.MinPrice + o.Name + o.Code + o.MaxSpeed.Name + o.MaxSpeed.Speed));
-                tip = $"{data.Inflow}抄{data.Inf} {tip}";
-                if (data.IsOpen)
-                {
-                    _tip.ShowTip(tip, GetColor(data.Inf));
-                }
-            }
-            else
-            {
-                //大盘无大波动的情况下只找3个被低估的分级按照涨速倒序（此种情况不建议买入）
-                tip = string.Join(" ",
-                data.GradingFunds.Where(o => o.AvgRate > o.Rate && o.Speed > 0).OrderByDescending(o => o.Speed).Take(3).Select(o => o.Rate + "^" + o.Speed + "^" + o.MinPrice + o.Name + o.Code));
-                tip = $"{data.Inflow} {data.Inf} {tip}";
-            }
 
-            lblBuy.Text = tip;
+            if (data.IsInit)
+            {
+                string tip;
+                if (data.Inf > 0.5)
+                {
+                    //大盘上涨时按平均涨幅倒序找出3个被低估的分级（此种是理想的买入区间，但最好在开头部分买入，否则可能追高）
+                    tip = string.Join(" ", gfs.Where(o => o.AvgRate > o.Rate).Take(3).Select(o => o.Rate + "^" + o.Speed + "^" + o.MinPrice + o.Name + o.Code));
+                    tip = $"{data.Inflow}吸{data.Inf} {tip}";
+                    if (data.IsOpen)
+                    {
+                        _tip.ShowTip(tip, Color.Red);
+                    }
+                }
+                else if (data.Inf < -0.5)
+                {
+                    //大盘下跌时提示逆势的3个分级，很可能是突围的分级（此种情况谨慎抄底，最好抓住下跌末尾抄进去，否则很危险，谨慎者不在此区间买入）
+                    tip = string.Join(" ",
+                        data.GradingFunds.Where(o => o.Speed > 0.1).OrderByDescending(o => o.Speed).Take(3).Select(o => o.Rate + "^" + o.Speed + "^" + o.MinPrice + o.Name + o.Code));
+                    tip = $"{data.Inflow}抛{data.Inf} {tip}";
+                    if (data.IsOpen)
+                    {
+                        _tip.ShowTip(tip, Color.Green);
+                    }
+                }
+                else if (data.Stocks.Max(o => o.Speed > 1))
+                {
+                    //大盘无大波动的情况下找出异动的个股对应的分级，可能是突围的分级（此种情况食之无味，弃之可惜）
+                    tip = string.Join(" ", data.GradingFunds.OrderByDescending(o => o.MaxSpeed.Speed).Take(3).Select(o => o.Rate + "^" + o.Speed + "^" + o.MinPrice + o.Name + o.Code + o.MaxSpeed.Name + o.MaxSpeed.Speed));
+                    tip = $"{data.Inflow}抄{data.Inf} {tip}";
+                    if (data.IsOpen)
+                    {
+                        _tip.ShowTip(tip, GetColor(data.Inf));
+                    }
+                }
+                else
+                {
+                    //大盘无大波动的情况下只找3个被低估的分级按照涨速倒序（此种情况不建议买入）
+                    tip = string.Join(" ",
+                    data.GradingFunds.Where(o => o.AvgRate > o.Rate && o.Speed > 0).OrderByDescending(o => o.Speed).Take(3).Select(o => o.Rate + "^" + o.Speed + "^" + o.MinPrice + o.Name + o.Code));
+                    tip = $"{data.Inflow} {data.Inf} {tip}";
+                }
+
+                lblBuy.Text = tip;
+            }
+            
             lblHot.Text = string.Join(" ",
                 data.IndustryFlow.Where(o => o.Inflow > 0).OrderByDescending(o => o.Inflow).Select(o => o.Inflow + o.Name));
             lblCold.Text = string.Join(" ",

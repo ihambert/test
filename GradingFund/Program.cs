@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Windows.Forms;
+using Common;
 
 namespace GradingFund
 {
@@ -13,6 +14,7 @@ namespace GradingFund
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
+            new Logger().Register();
             Application.Run(new Form1());
         }
     }

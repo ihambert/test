@@ -419,7 +419,7 @@ namespace GoodStock
 
                         var foreColor = _inf > 0 ? Color.FromArgb(ys, 0, 0) : Color.FromArgb(0, ys, 0);
                         var t = _inf > 0 ? "吸" : "抛";
-                        _tip.ShowTip($"{pos}{infStr}{t}：{tip}", foreColor, true);
+                        _tip.ShowTip($"{pos}{infStr}{t}：{tip}", foreColor);
                     }
                 }
 

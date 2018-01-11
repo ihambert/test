@@ -17,29 +17,31 @@ namespace GradingFund
         public void Start()
         {
             //测试：记录当前线程ID
-            Log.Debug($"基金服务类主线程ID：{Thread.CurrentThread.ManagedThreadId}");
+            Logger.Debug($"基金服务类主线程ID：{Thread.CurrentThread.ManagedThreadId}");
 
             #region 初始化基金和股票代码数据
 
             var gfs = File.ReadAllLines(FileGradingFund);
             Dictionary<int, Task<string>> initTasks = null;
+            Task<string> baseFundTask = null;
 
             for (var i = 0; i < gfs.Length; i++)
             {
                 var gf = gfs[i];
                 var codes = gf.Split(' ');
-                if (codes.Length < 21)
+                if (codes.Length < 22)
                 {
                     if (initTasks == null)
                         initTasks = new Dictionary<int, Task<string>>();
                     initTasks.Add(i, _web.GetStringAsync(UrlGradingStocks + codes[0]));
+                    baseFundTask = _web.GetStringAsync(UrlBaseFund);
                 }
                 else
                 {
                     var stocks = new List<Stock>();
                     var holdingRatio = new List<float>();
 
-                    for (var j = 1; j < 11; j++)
+                    for (var j = 2; j < 12; j++)
                     {
                         var stock = _data.Stocks.Find(o => o.Code == codes[j]);
 
@@ -66,7 +68,8 @@ namespace GradingFund
                         Stocks = stocks,
                         Leader = stocks[0],
                         MaxSpeed = stocks[0],
-                        HoldingRatio = holdingRatio
+                        HoldingRatio = holdingRatio,
+                        BaseFund = codes[1]
                     });
                 }
             }
@@ -93,13 +96,17 @@ namespace GradingFund
 
             if (initTasks != null)
             {
+                var mj = baseFundTask.Result;
+                var mjs = StringUtil.GetList(mj, "base_fund_id\":\"", "\"");
+                var stockCodes = StringUtil.GetList(mj, "fundB_id\":\"", "\"");
+
                 foreach (var task in initTasks)
                 {
                     var code = gfs[task.Key].Split(' ')[0];
 
                     if (task.Value.IsFaulted)
                     {
-                        Log.Error(UrlGradingStocks + code, task.Value.Exception);
+                        Logger.Error(UrlGradingStocks + code, task.Value.Exception);
                         return;
                     }
 
@@ -108,7 +115,7 @@ namespace GradingFund
 
                     if (sc.Count == 0)
                     {
-                        Log.Warn(UrlGradingStocks + code);
+                        Logger.Warn(UrlGradingStocks + code);
                         return;
                     }
 
@@ -133,6 +140,8 @@ namespace GradingFund
                         stocks.Add(stock);
                         holdingRatio.Add(Convert.ToSingle(hs[6].Replace("%", "")));
                     }
+                    var ii = stockCodes.FindIndex(o => o == code);
+                    var bf = mjs[ii];
 
                     _data.GradingFunds.Add(new GradingFund
                     {
@@ -140,21 +149,21 @@ namespace GradingFund
                         Stocks = stocks,
                         Leader = stocks[0],
                         MaxSpeed = stocks[0],
-                        HoldingRatio = holdingRatio
+                        HoldingRatio = holdingRatio,
+                        BaseFund = bf
                     });
                     gfs[task.Key] =
-                        $"{code} {string.Join(" ", stocks.Select(o => o.Code))} {string.Join(" ", holdingRatio)}";
+                        $"{code} {bf} {string.Join(" ", stocks.Select(o => o.Code))} {string.Join(" ", holdingRatio)}";
                 }
                 File.WriteAllLines(FileGradingFund, gfs);
             }
 
             #endregion
 
-            //必须是后台线程，否则程序退出时此线程依然没退出，导致在内存中依然有此进程
-            var thread = new Thread(UpdateData) {IsBackground = true};
+            var thread = new Thread(UpdateData);
             thread.Start();
             //测试：记录当前线程ID
-            Log.Debug("开始循环获取数据");
+            Logger.Debug("开始循环获取数据");
         }
 
         public string UrlGradingFunds
@@ -181,7 +190,7 @@ namespace GradingFund
         private void UpdateData()
         {
             //测试：记录当前线程ID
-            Log.Debug($"UpdateData线程ID：{Thread.CurrentThread.ManagedThreadId}");
+            Logger.Debug($"UpdateData线程ID：{Thread.CurrentThread.ManagedThreadId}");
 
             #region 统一异步获取网页数据，可以提高性能
 
@@ -208,7 +217,7 @@ namespace GradingFund
             {
                 if (_tasks[i].IsFaulted)
                 {
-                    Log.Error("金融界股票接口", _tasks[i].Exception);
+                    Logger.Error("金融界股票接口", _tasks[i].Exception);
                     ContinueUpdate();
                     return;
                 }
@@ -219,7 +228,7 @@ namespace GradingFund
                 }
                 catch (Exception e)
                 {
-                    Log.Error("金融界股票接口异常", e);
+                    Logger.Error("金融界股票接口异常", e);
                     ContinueUpdate();
                     return;
                 }
@@ -229,7 +238,7 @@ namespace GradingFund
 
                 if (fs.Count == 0)
                 {
-                    Log.Warn("金融界股票接口获取空数据");
+                    Logger.Warn("金融界股票接口获取空数据");
                     ContinueUpdate();
                     return;
                 }
@@ -246,7 +255,7 @@ namespace GradingFund
                     stock.MaxPrice = Convert.ToSingle(a[3]);
                     stock.MinPrice = Convert.ToSingle(a[4]);
                     stock.Price = Convert.ToSingle(a[5]);
-                    stock.Tm = Math.Round(Convert.ToDouble(a[6]) / 10000, 1);
+                    stock.Tm = float.Parse((Convert.ToSingle(a[6])/10000).ToString("F1"));
                     stock.Cat = Convert.ToSingle(a[7]);
                     stock.Tr = Convert.ToSingle(a[8]);
                     stock.Ape = Convert.ToSingle(a[9]);
@@ -257,6 +266,19 @@ namespace GradingFund
                 }
             }
             _tasks.Clear();
+            if (_data.IsOpen)
+            {
+                //删除停牌个股
+                var rc = _data.Stocks.RemoveAll(o => o.MaxPrice == 0);
+
+                if (rc > 0)
+                {
+                    foreach (var fund in _data.GradingFunds)
+                    {
+                        fund.Stocks.RemoveAll(o => o.MaxPrice == 0);
+                    }
+                }
+            }
 
             #endregion
 
@@ -264,7 +286,7 @@ namespace GradingFund
 
             if (taskGradings.IsFaulted)
             {
-                Log.Error("新浪股票基金接口", taskGradings.Exception);
+                Logger.Error("新浪股票基金接口", taskGradings.Exception);
                 ContinueUpdate();
                 return;
             }
@@ -275,7 +297,7 @@ namespace GradingFund
             }
             catch (Exception e)
             {
-                Log.Error("新浪股票基金接口异常", e);
+                Logger.Error("新浪股票基金接口异常", e);
                 ContinueUpdate();
                 return;
             }
@@ -284,7 +306,7 @@ namespace GradingFund
 
             if (codes.Count == 0)
             {
-                Log.Warn("新浪股票基金接口获取空数据");
+                Logger.Warn("新浪股票基金接口获取空数据");
                 ContinueUpdate();
                 return;
             }
@@ -305,29 +327,14 @@ namespace GradingFund
                 //统计数据
                 fund.Rate = Math.Round((fund.Price - fund.YesterdayPrice)*100/fund.YesterdayPrice, 2);
                 fund.Swing = Math.Round((fund.MaxPrice - fund.MinPrice)*100/fund.YesterdayPrice, 2);
+                if (fund.Stocks.Count == 0) continue;
                 double rateAll = 0;
                 int redCount = 0;
                 int stockCount = 0;
                 float ratioAll = 0;
-                for (int l = fund.Stocks.Count - 1; l >= 0; l--)
+                for (int l = 0; l < fund.Stocks.Count; l++)
                 {
                     var stock = fund.Stocks[l];
-
-                    if (stock.MaxPrice == 0 && _data.IsOpen)
-                    {
-                        var fs = _data.Stocks.FindIndex(o => o.Code == stock.Code);
-
-                        if (fs >= 0)
-                        {
-                            Log.Debug($"{stock.Code}{stock.Name}停牌");
-                            _data.Stocks.RemoveAt(fs);
-                        }
-
-                        //删除停牌个股
-                        fund.Stocks.RemoveAt(l);
-                        continue;
-                    }
-
                     if (stock.Rate > -10.1)
                     {
                         rateAll += stock.Rate*fund.HoldingRatio[l];
@@ -344,7 +351,6 @@ namespace GradingFund
                     {
                         fund.Leader = stock;
                     }
-
                     if (stock.Speed > fund.MaxSpeed.Speed)
                     {
                         fund.MaxSpeed = stock;
@@ -365,7 +371,7 @@ namespace GradingFund
 
             if (taskIndustry.IsFaulted)
             {
-                Log.Error("东方财富行业数据", taskIndustry.Exception);
+                Logger.Error("东方财富行业数据", taskIndustry.Exception);
                 ContinueUpdate();
                 return;
             }
@@ -376,7 +382,7 @@ namespace GradingFund
             }
             catch (Exception e)
             {
-                Log.Error("东方财富行业数据异常", e);
+                Logger.Error("东方财富行业数据异常", e);
                 ContinueUpdate();
                 return;
             }
@@ -411,7 +417,7 @@ namespace GradingFund
 
             if (taskConcept.IsFaulted)
             {
-                Log.Error("东方财富概念数据", taskConcept.Exception);
+                Logger.Error("东方财富概念数据", taskConcept.Exception);
                 ContinueUpdate();
                 return;
             }
@@ -422,7 +428,7 @@ namespace GradingFund
             }
             catch (Exception e)
             {
-                Log.Error("东方财富概念数据异常", e);
+                Logger.Error("东方财富概念数据异常", e);
                 ContinueUpdate();
                 return;
             }
@@ -444,7 +450,7 @@ namespace GradingFund
             #endregion
 
             //测试：记录当前线程ID
-            Log.Debug("UpdateData获取数据完毕");
+            Logger.Debug("UpdateData获取数据完毕");
 
             Updated?.Invoke(_data);
             ContinueUpdate();
@@ -454,15 +460,10 @@ namespace GradingFund
         {
             //将被线程挂起，等待一段时间后继续占用CPU
             Thread.Sleep(SleepTime);
-            _data.IsInit = true;
 
             if (_data.IsDealTime)
             {
                 UpdateData();
-            }
-            else
-            {
-                ContinueUpdate();
             }
         }
 
@@ -499,6 +500,11 @@ namespace GradingFund
         /// </summary>
         private const string UrlConcept =
             "http://nufm.dfcfw.com/EM_Finance2014NumericApplication/JS.aspx?type=CT&cmd=C._BKGN&sty=DCFFPBFM&st=(BalFlowMain)&sr=-1&ps=10000&token=894050c76af8597a853f5b408b759f5d";
+
+        /// <summary>
+        /// 获取分级母基金名称
+        /// </summary>
+        private const string UrlBaseFund = "https://www.jisilu.cn/data/sfnew/fundm_list/";
 
         /// <summary>
         /// 每次请求的股票个数

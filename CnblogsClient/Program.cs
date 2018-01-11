@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Windows.Forms;
+using Common;
 
 namespace CnblogsClient
 {
@@ -13,6 +14,7 @@ namespace CnblogsClient
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
+            new Logger().Register();
             Application.Run(new Form1());
         }
     }

@@ -26,11 +26,10 @@ namespace Common
                 string v = GetVal(str, startStr, endStr, remove, ref startIndex);
                 if (startIndex == -1)
                 {
-                    break;
+                    return lst;
                 }
                 lst.Add(v);
             }
-            return lst;
         }
 
         public static string GetVal(string str, string startStr, string endStr, bool remove = true, int startIndex = 0)
@@ -83,11 +82,10 @@ namespace Common
                 string v = GetVal(str, startStr, needLength, remove, ref startIndex);
                 if (startIndex == -1)
                 {
-                    break;
+                    return lst;
                 }
                 lst.Add(v);
             }
-            return lst;
         }
 
         public static string GetVal(string str, string startStr, int needLength, bool remove = true, int startIndex = 0)

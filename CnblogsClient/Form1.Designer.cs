@@ -73,6 +73,7 @@
             this.cbbCate.Font = new System.Drawing.Font("宋体", 15.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
             this.cbbCate.FormattingEnabled = true;
             this.cbbCate.Items.AddRange(new object[] {
+            "全部",
             ".NET技术",
             "编程语言",
             "软件设计",

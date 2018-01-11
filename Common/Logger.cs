@@ -7,7 +7,7 @@ namespace Common
     /// <summary>
     ///     简易日志类（咱就想简单记个日志，需要那么复杂吗）
     /// </summary>
-    public static class Log
+    public class Logger
     {
         /// <summary>
         ///     记录异常信息
@@ -24,8 +24,8 @@ namespace Common
             {
                 var innerEx = e.InnerException == null
                 ? string.Empty
-                : $",InMessage:{e.InnerException.Message},InSource:{e.InnerException.Source},InStackTrace:{e.InnerException.StackTrace}";
-                Logger(FileError, $"{msg}，Message:{e.Message},Source:{e.Source},StackTrace:{e.StackTrace}{innerEx}");
+                : $",InMessage:{e.InnerException.Message},InStackTrace:{e.InnerException.StackTrace}";
+                Log(_fileError, $"{msg}，Message:{e.Message},StackTrace:{e.StackTrace}{innerEx}");
             }
         }
 
@@ -35,7 +35,7 @@ namespace Common
         /// <param name="msg">警告内容</param>
         public static void Warn(string msg)
         {
-            Logger(FileWarn, msg);
+            Log(_fileWarn, msg);
         }
 
         /// <summary>
@@ -44,7 +44,7 @@ namespace Common
         /// <param name="msg">一般信息</param>
         public static void Info(string msg)
         {
-            Logger(FileInfo, msg);
+            Log(_fileInfo, msg);
         }
 
         /// <summary>
@@ -53,18 +53,15 @@ namespace Common
         /// <param name="msg">调试信息</param>
         public static void Debug(string msg)
         {
-            Logger(FileDebug, msg);
+            Log(_fileDebug, msg);
         }
 
-        private static void Logger(string fileName, string msg)
+        private static void Log(string fileName, string msg)
         {
             //开新线程写日志不阻塞原线程（虽然也无需多长时间）
             Task.Factory.StartNew(() =>
             {
                 msg = $"{DateTime.Now:yy-M-d H:m:s}：{msg}{Environment.NewLine}";
-
-                if (!Directory.Exists(FileBase))
-                    Directory.CreateDirectory(FileBase);
 
                 try
                 {
@@ -82,14 +79,32 @@ namespace Common
             });
         }
 
+        /// <summary>
+        /// 注册启动日志
+        /// </summary>
+        public void Register()
+        {
+            const string fileBase = "File/Log";
+
+            if (!Directory.Exists(fileBase))
+            {
+                Directory.CreateDirectory(fileBase);
+            }
+
+            var ym = DateTime.Now.ToString("yyMM");
+            _fileError = $"{fileBase}/Error{ym}.txt";
+            _fileWarn = $"{fileBase}/Warn{ym}.txt";
+            _fileInfo = $"{fileBase}/Info{ym}.txt";
+            _fileDebug = $"{fileBase}/Debug{ym}.txt";
+        }
+
         #region 常量
 
-        private const string FileBase = "File/Log";
         //以一个月对一个单位，每个月生成一个文件
-        private static readonly string FileError = "File/Log/Error" + DateTime.Now.ToString("yyMM") + ".txt";
-        private static readonly string FileWarn = "File/Log/Warn" + DateTime.Now.ToString("yyMM") + ".txt";
-        private static readonly string FileInfo = "File/Log/Info" + DateTime.Now.ToString("yyMM") + ".txt";
-        private static readonly string FileDebug = "File/Log/Debug" + DateTime.Now.ToString("yyMM") + ".txt";
+        private static string _fileError;
+        private static string _fileWarn;
+        private static string _fileInfo;
+        private static string _fileDebug;
 
         #endregion
     }

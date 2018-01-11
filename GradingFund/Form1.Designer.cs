@@ -35,7 +35,7 @@
             this.lblHot2 = new System.Windows.Forms.Label();
             this.dgvFunds = new System.Windows.Forms.DataGridView();
             this.Column1 = new System.Windows.Forms.DataGridViewLinkColumn();
-            this.Column2 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.Column2 = new System.Windows.Forms.DataGridViewLinkColumn();
             this.Column4 = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.Rate = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.AvgRate = new System.Windows.Forms.DataGridViewTextBoxColumn();
@@ -50,6 +50,7 @@
             this.Column3 = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.Column8 = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.Column9 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.BaseFund = new System.Windows.Forms.DataGridViewTextBoxColumn();
             ((System.ComponentModel.ISupportInitialize)(this.dgvFunds)).BeginInit();
             this.SuspendLayout();
             // 
@@ -121,7 +122,8 @@
             this.Column6,
             this.Column3,
             this.Column8,
-            this.Column9});
+            this.Column9,
+            this.BaseFund});
             this.dgvFunds.Location = new System.Drawing.Point(0, 105);
             this.dgvFunds.Name = "dgvFunds";
             this.dgvFunds.ReadOnly = true;
@@ -140,7 +142,6 @@
             this.Column1.HeaderText = "分级代码";
             this.Column1.Name = "Column1";
             this.Column1.ReadOnly = true;
-            this.Column1.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.Automatic;
             // 
             // Column2
             // 
@@ -148,7 +149,6 @@
             this.Column2.HeaderText = "分级名称";
             this.Column2.Name = "Column2";
             this.Column2.ReadOnly = true;
-            this.Column2.Resizable = System.Windows.Forms.DataGridViewTriState.True;
             // 
             // Column4
             // 
@@ -255,6 +255,13 @@
             this.Column9.Name = "Column9";
             this.Column9.ReadOnly = true;
             // 
+            // BaseFund
+            // 
+            this.BaseFund.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
+            this.BaseFund.HeaderText = "母基代码";
+            this.BaseFund.Name = "BaseFund";
+            this.BaseFund.ReadOnly = true;
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
@@ -283,7 +290,7 @@
         private System.Windows.Forms.Label lblHot2;
         private System.Windows.Forms.DataGridView dgvFunds;
         private System.Windows.Forms.DataGridViewLinkColumn Column1;
-        private System.Windows.Forms.DataGridViewTextBoxColumn Column2;
+        private System.Windows.Forms.DataGridViewLinkColumn Column2;
         private System.Windows.Forms.DataGridViewTextBoxColumn Column4;
         private System.Windows.Forms.DataGridViewTextBoxColumn Rate;
         private System.Windows.Forms.DataGridViewTextBoxColumn AvgRate;
@@ -298,6 +305,7 @@
         private System.Windows.Forms.DataGridViewTextBoxColumn Column3;
         private System.Windows.Forms.DataGridViewTextBoxColumn Column8;
         private System.Windows.Forms.DataGridViewTextBoxColumn Column9;
+        private System.Windows.Forms.DataGridViewTextBoxColumn BaseFund;
     }
 }
 

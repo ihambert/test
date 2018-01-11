@@ -88,5 +88,10 @@ namespace GradingFund
         ///     分级重仓股票持有比例
         /// </summary>
         public List<float> HoldingRatio;
+
+        /// <summary>
+        /// 母基代码
+        /// </summary>
+        public string BaseFund;
     }
 }

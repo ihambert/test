@@ -1,4 +1,4 @@
-﻿namespace GoodStock
+﻿namespace Common
 {
     partial class Tip
     {
@@ -38,9 +38,7 @@
             this.lblTip.Location = new System.Drawing.Point(2, 9);
             this.lblTip.Margin = new System.Windows.Forms.Padding(0);
             this.lblTip.Name = "lblTip";
-            this.lblTip.Size = new System.Drawing.Size(69, 20);
             this.lblTip.TabIndex = 0;
-            this.lblTip.Text = "哈皮啦";
             this.lblTip.Click += new System.EventHandler(this.lblTip_Click);
             // 
             // Tip

@@ -31,7 +31,7 @@ namespace GradingFund
         public double Inf;
 
         /// <summary>
-        ///     大盘总流入资金（单位：亿元）
+        ///     大盘主力总流入资金（单位：亿元）
         /// </summary>
         public double Inflow;
 

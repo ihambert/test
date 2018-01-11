@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
-using System.Web;
 using System.Windows.Forms;
 using Common;
 
@@ -19,7 +18,7 @@ namespace CnblogsClient
         //加载模式0：文章；1：新闻；2：搜索文章
         private int _tpye;
         private readonly List<string> _urls = new List<string>();
-        private readonly WebHelper _web = new WebHelper();
+        private readonly WebUtil _web = new WebUtil();
 
         public Form1()
         {
@@ -34,8 +33,8 @@ namespace CnblogsClient
         /// <param name="pageIndex"></param>
         private bool AddPost(int pageIndex)
         {
-            const string url = "https://www.cnblogs.com/mvc/AggSite/PostList.aspx";
-            var html = _web.UploadString(url, GetUrl() + pageIndex);
+            const string url = "https://www.cnblogs.com/mvc/AggSite/PostList.aspx?";
+            var html = _web.Fetch(url + GetUrl() + pageIndex, "POST");
             var posts = StringUtil.GetList(html, "\"post_item", "\"article_comment");
 
             foreach (var item in posts)
@@ -45,7 +44,7 @@ namespace CnblogsClient
                 if (diggnum < 3)
                     continue;
                 var t = StringUtil.GetVal(item, "\"titlelnk", "/a>");
-                var title = StringUtil.GetVal(t, ">", "<");
+                var title = StringUtil.RemoveHtml(StringUtil.GetVal(t, ">", "<"));
                 var time = StringUtil.GetVal(item, "发布于 ", 16);
                 _urls.Add(StringUtil.GetHref(t));
                 lstPost.Items.Add($"{diggnum} {title} {time}");
@@ -65,13 +64,13 @@ namespace CnblogsClient
         private void AddSearchPost(int pageIndex)
         {
             var url = $"http://zzk.cnblogs.com/s/blogpost?Keywords={txtSearch.Text.Trim()}&pageindex={pageIndex}";
-            var html = _web.DownloadGzipString(url);
+            var html = _web.Fetch(url);
             var posts = StringUtil.GetList(html, "\"searchItem", "\"searchItemInfo-comments");
             foreach (var item in posts)
             {
                 var diggnum = StringUtil.GetVal(item, ">推荐(", ")");
                 var n = StringUtil.GetVal(item, "searchItemTitle\">", "</h3>");
-                var title = HttpUtility.HtmlDecode(StringUtil.RemoveHtml(StringUtil.GetVal(n, "\">", "</a>")));
+                var title = StringUtil.RemoveHtml(StringUtil.GetVal(n, "\">", "</a>"));
                 var date = StringUtil.GetVal(item, "searchItemInfo-publishDate\">", "</span>");
                 _urls.Add(StringUtil.GetHref(n));
                 lstPost.Items.Add($"{diggnum} {title} {date}");
@@ -89,10 +88,10 @@ namespace CnblogsClient
         /// <param name="pageIndex"></param>
         private bool AddNews(int pageIndex)
         {
-            const string url = "https://www.cnblogs.com/mvc/AggSite/NewsList.aspx";
-            var html = _web.UploadString(url,
-                "CategoryId=-1&CategoryType=News&ItemListActionName=NewsList&ItemListActionName=NewsList&PageIndex=" +
-                pageIndex);
+            string url =
+                "https://www.cnblogs.com/mvc/AggSite/NewsList.aspx?CategoryId=-1&CategoryType=News&ItemListActionName=NewsList&ItemListActionName=NewsList&PageIndex=" +
+                pageIndex;
+            var html = _web.Fetch(url, "POST");
             var posts = StringUtil.GetList(html, "\"post_item", "\"article_comment");
 
             foreach (var item in posts)
@@ -102,7 +101,7 @@ namespace CnblogsClient
                 if (diggnum < 3)
                     continue;
                 var t = StringUtil.GetVal(item, "\"titlelnk", "/a>");
-                var title = StringUtil.GetVal(t, ">", "<");
+                var title = StringUtil.RemoveHtml(StringUtil.GetVal(t, ">", "<"));
                 var time = StringUtil.GetVal(item, "发布于 ", 16);
                 var link = StringUtil.GetHref(t);
                 if (!link.Contains("http"))
@@ -159,7 +158,7 @@ namespace CnblogsClient
             var parentCategoryId = "0";
             switch (cbbCate.SelectedIndex)
             {
-                case 0:
+                case 1:
                     parentCategoryId = "108698";
                     categoryType = "SiteCategory";
                     switch (cbbType.SelectedIndex)
@@ -216,7 +215,7 @@ namespace CnblogsClient
                             break;
                     }
                     break;
-                case 1:
+                case 2:
                     parentCategoryId = "2";
                     categoryType = "SiteCategory";
                     switch (cbbType.SelectedIndex)
@@ -270,7 +269,7 @@ namespace CnblogsClient
                             break;
                     }
                     break;
-                case 2:
+                case 3:
                     parentCategoryId = "108701";
                     categoryType = "SiteCategory";
                     switch (cbbType.SelectedIndex)
@@ -294,7 +293,7 @@ namespace CnblogsClient
                             break;
                     }
                     break;
-                case 3:
+                case 4:
                     parentCategoryId = "108703";
                     categoryType = "SiteCategory";
                     switch (cbbType.SelectedIndex)
@@ -318,7 +317,7 @@ namespace CnblogsClient
                             break;
                     }
                     break;
-                case 4:
+                case 5:
                     parentCategoryId = "108704";
                     categoryType = "SiteCategory";
                     switch (cbbType.SelectedIndex)
@@ -354,7 +353,7 @@ namespace CnblogsClient
                             break;
                     }
                     break;
-                case 5:
+                case 6:
                     parentCategoryId = "108705";
                     categoryType = "SiteCategory";
                     switch (cbbType.SelectedIndex)
@@ -381,7 +380,7 @@ namespace CnblogsClient
                             break;
                     }
                     break;
-                case 6:
+                case 7:
                     parentCategoryId = "108709";
                     categoryType = "SiteCategory";
                     switch (cbbType.SelectedIndex)
@@ -402,7 +401,7 @@ namespace CnblogsClient
                             break;
                     }
                     break;
-                case 7:
+                case 8:
                     parentCategoryId = "108712";
                     categoryType = "SiteCategory";
                     switch (cbbType.SelectedIndex)
@@ -432,7 +431,7 @@ namespace CnblogsClient
                             break;
                     }
                     break;
-                case 8:
+                case 9:
                     parentCategoryId = "108724";
                     categoryType = "SiteCategory";
                     switch (cbbType.SelectedIndex)
@@ -459,7 +458,7 @@ namespace CnblogsClient
                             break;
                     }
                     break;
-                case 9:
+                case 10:
                     parentCategoryId = "4";
                     categoryType = "SiteCategory";
                     switch (cbbType.SelectedIndex)
@@ -500,43 +499,43 @@ namespace CnblogsClient
             cbbType.Items.Clear();
             switch (cbbCate.SelectedIndex)
             {
-                case 0:
+                case 1:
                     cbbType.Items.AddRange(new object[]
                     {
                         ".NET新手区", "ASP.NET", "C#", ".NET Core", "WinForm", "Silverlight", "WCF", "CLR", "WPF", "XNA",
                         "Visual Studio", "ASP.NET MVC", "控件开发", "Entity Framework", "NHibernate"
                     });
                     break;
-                case 1:
+                case 2:
                     cbbType.Items.AddRange(new object[]
                     {
                         "JAVA", "C++", "PHP", "Delphi", "Python", "Ruby", "C", "Erlang", "Go", "Swift", "Scala", "R",
                         "Verilog", "其它"
                     });
                     break;
-                case 2:
+                case 3:
                     cbbType.Items.AddRange(new object[] {"架构设计", "面向对象", "设计模式", "领域驱动设计"});
                     break;
-                case 3:
+                case 4:
                     cbbType.Items.AddRange(new object[] {"Html/Css", "JavaScript", "jQuery", "HTML5"});
                     break;
-                case 4:
+                case 5:
                     cbbType.Items.AddRange(new object[]
                         {"SharePoint", "GIS", "SAP", "Oracle ERP", "Dynamics CRM", "K2 BPM", "信息安全", "企业信息化其他"});
                     break;
-                case 5:
+                case 6:
                     cbbType.Items.AddRange(new object[] {"Android", "iOS", "Windows Phone", "Windows Mobile", "其他"});
                     break;
-                case 6:
+                case 7:
                     cbbType.Items.AddRange(new object[] {"敏捷开发", "项目与团队管理", "软件工程其他"});
                     break;
-                case 7:
+                case 8:
                     cbbType.Items.AddRange(new object[] {"SQL Server", "Oracle", "MySQL", "NoSQL", "大数据", "其他"});
                     break;
-                case 8:
+                case 9:
                     cbbType.Items.AddRange(new object[] {"Windows", "Windows Server", "Linux", "OS X", "嵌入式"});
                     break;
-                case 9:
+                case 10:
                     cbbType.Items.AddRange(new object[]
                     {
                         "非技术区", "软件测试", "代码与软件发布", "计算机图形学", "Google开发", "游戏开发", "程序人生", "求职面试", "读书区", "转载区",

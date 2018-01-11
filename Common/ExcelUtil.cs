@@ -166,10 +166,9 @@ namespace Common
 
                 return data;
             }
-            catch (Exception ex)
+            catch
             {
                 throw new Exception("导入失败,请检查文件是否被其他应用占用。");
-                return null;
             }
         }
 
